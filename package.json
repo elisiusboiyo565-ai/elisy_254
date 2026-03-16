@@ -18,5 +18,9 @@
   "bugs": {
     "url": "https://github.com/elisiusboiyo565-ai/elisy_254/issues"
   },
-  "homepage": "https://github.com/elisiusboiyo565-ai/elisy_254#readme"
+  "homepage": "https://github.com/elisiusboiyo565-ai/elisy_254#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "telegraf": "^4.16.3"
+  }
 }
