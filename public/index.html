@@ -1,200 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELISY 254 | Secure Terminal</title>
-    <style>
-        :root { --neon: #00f2ff; --bg: #0d1117; --success: #3fb950; --card: #161b22; }
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; overflow-x: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELISY 254 - AI Identity Terminal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+  
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#06080f;color:#e2e8f0;font-family:'JetBrains Mono',monospace;overflow-x:hidden;}
 
-        /* AUTHENTICATION OVERLAY */
-        #authOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(13, 17, 23, 0.98);
-            display: flex; justify-content: center; align-items: center; z-index: 1000;
-        }
-        .auth-card {
-            background: var(--card); padding: 40px; border: 2px solid var(--neon);
-            border-radius: 15px; width: 380px; text-align: center;
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
-        }
-        input {
-            width: 100%; padding: 12px; margin: 10px 0; box-sizing: border-box;
-            background: #0d1117; border: 1px solid #30363d;
-            color: white; border-radius: 5px; text-align: center; font-size: 1rem;
-        }
-        .btn {
-            background: var(--neon); color: black; border: none;
-            padding: 15px; width: 100%; border-radius: 5px;
-            font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s;
-        }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+  /* SPLASH SCREEN */
+  #splashScreen {
+    position: fixed; inset: 0; background: #06080f; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 1s ease;
+  }
+  .splash-logo { font-family: 'Orbitron', sans-serif; font-size: 50px; color: #00E5FF; letter-spacing: 12px; font-weight: 900; }
 
-        #otpSection { display: none; }
-        #mainDashboard { display: none; padding: 20px; flex-direction: column; align-items: center; }
+  /* DASHBOARD */
+  .control-panel { max-width: 700px; margin: 40px auto; background: rgba(255,255,255,0.03); padding: 25px; border-radius: 28px; border: 1px solid rgba(255,255,255,0.1); position: relative;}
 
-        /* VIEWPORT & OVAL */
-        .viewport {
-            width: 100%; max-width: 600px; aspect-ratio: 4/3;
-            background: #000; border: 3px solid var(--neon);
-            position: relative; overflow: hidden; border-radius: 10px; perspective: 1000px;
-        }
-        .face-oval {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 220px; height: 280px; border: 2px solid var(--neon);
-            border-radius: 50%; box-shadow: 0 0 0 2000px rgba(0,0,0,0.7);
-            z-index: 5; pointer-events: none;
-        }
-        #viewImage {
-            position: absolute; top: 15%; left: 15%; width: 70%;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-style: preserve-3d;
-        }
+  /* VERIFICATION BAR */
+  .verify-container { margin-bottom: 20px; }
+  .verify-text { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #00E5FF; font-weight: bold; }
+  .progress-bg { width: 100%; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; border: 1px solid rgba(0,229,255,0.2); }
+  #progressBar { width: 0%; height: 100%; background: linear-gradient(90deg, #7B5EA7, #00E5FF); transition: width 0.4s ease; }
 
-        /* TICKER */
-        .flag-ticker {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: #000;
-            border-top: 1px solid var(--neon); padding: 12px 0; overflow: hidden; white-space: nowrap;
-        }
-        .ticker-content { display: inline-block; animation: scroll 50s linear infinite; }
-        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    </style>
+  /* 3D VIEWPORT */
+  .face-viewport { position: relative; width: 100%; height: 400px; background: #000; border-radius: 20px; border: 2px solid #00E5FF33; perspective: 1200px; overflow: hidden; }
+  
+  /* FLASH EFFECT LAYER */
+  #flashLayer {
+    position: absolute; inset: 0; background: white; opacity: 0; z-index: 10; pointer-events: none; transition: opacity 0.1s;
+  }
+
+  #photoContainer { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: transform 0.6s; transform-style: preserve-3d; }
+  #targetPhoto { max-width: 85%; max-height: 85%; border-radius: 12px; transition: 0.2s; }
+
+  /* BUTTONS */
+  .control-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+  .key-btn { background: rgba(255,255,255,0.06); border: 1px solid #00E5FF44; color: #fff; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: inherit; }
+  .key-btn:hover { background: #00E5FF22; border-color: #00E5FF; }
+  .action-btn { background: #00E5FF; color: #000; border: none; font-weight: 900; }
+
+  /* CHATBOT */
+  #chatContainer {
+    position: fixed; bottom: 85px; right: 25px; width: 320px; height: 450px;
+    background: #0d1117; border: 1px solid #00E5FF; border-radius: 15px;
+    display: flex; flex-direction: column; z-index: 1000; display: none;
+  }
+  .chat-header { background: #00E5FF; color: #000; padding: 12px; font-weight: 900; display: flex; justify-content: space-between; }
+  #chatMessages { flex: 1; padding: 10px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
+  .msg { padding: 10px; border-radius: 12px; max-width: 85%; }
+  .user-msg { background: #7B5EA7; align-self: flex-end; color: white; }
+  .ai-msg { background: #1f2937; align-self: flex-start; color: #00E5FF; }
+  .chat-input-area { display: flex; padding: 10px; gap: 5px; }
+  #userText { flex: 1; background: #1a1a2e; border: none; border-radius: 8px; color: white; padding: 8px; outline: none; }
+  #chatToggle { position: fixed; bottom: 85px; right: 25px; background: #00E5FF; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 30px; z-index: 1001; box-shadow: 0 0 15px #00E5FF66; }
+
+  /* MARQUEE */
+  .marquee { position: fixed; bottom: 0; width: 100%; background: #000; padding: 10px; border-top: 1px solid #00E5FF33; overflow: hidden; white-space: nowrap; }
+  .marquee-content { display: inline-block; animation: scroll 30s linear infinite; color: #00E5FF; font-weight: bold; }
+  @keyframes scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } }
+</style>
 </head>
-<body onload="checkSession()">
+<body>
 
-    <div id="authOverlay">
-        <div class="auth-card" id="loginSection">
-            <h1 style="color:var(--neon); margin:0;">ELISY 254</h1>
-            <p style="color:gray; font-size:0.8rem; margin-bottom:25px;">GLOBAL IDENTITY TERMINAL</p>
-            <input type="text" id="userName" placeholder="Full Name (Emily)">
-            <input type="text" id="userPhone" placeholder="Phone Number">
-            <button class="btn" onclick="generateCode()">GENERATE 5-DIGIT CODE</button>
-        </div>
+<div id="splashScreen"><div class="splash-logo">ELISY 254</div></div>
 
-        <div class="auth-card" id="otpSection">
-            <h2 style="color:var(--neon)">VERIFICATION</h2>
-            <div id="codeDisplay" style="font-size:2.5rem; color:var(--success); letter-spacing: 8px; margin: 15px 0; font-weight: bold;"></div>
-            <p style="font-size:0.7rem; color:gray;">TYPE THE CODE ABOVE TO PROCEED</p>
-            <input type="text" id="otpInput" placeholder="Enter Code" maxlength="5">
-            <button class="btn" onclick="verifyAccess()" style="background:var(--success)">VERIFY & ACCESS</button>
-        </div>
+<div class="control-panel">
+  <h2 style="color:#00E5FF; text-align:center; font-family:'Orbitron'; margin-bottom:15px;">ELISY 254 TERMINAL</h2>
+
+  <div class="verify-container">
+    <div class="verify-text"><span>LIVENESS STATUS</span><span id="verifyStatus">0% ANALYZED</span></div>
+    <div class="progress-bg"><div id="progressBar"></div></div>
+  </div>
+
+  <div class="face-viewport">
+    <div id="flashLayer"></div> <div id="photoContainer">
+      <img id="targetPhoto" src="" style="display:none;">
+      <p id="empty-msg" style="color:#444; font-weight:bold;">AWAITING IDENTITY IMAGE</p>
     </div>
+  </div>
 
-    <div id="mainDashboard">
-        <div style="width:100%; max-width:900px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <div>
-                <h2 style="color:var(--neon); margin:0;">ELISY 254 <span style="color:white; font-weight:100;">PRO</span></h2>
-                <small id="sessionUser" style="color:var(--success)">● SYSTEM ENCRYPTED</small>
-            </div>
-            <div style="text-align:right;">
-                <div id="dateNow" style="font-size:0.8rem;"></div>
-                <div id="timeNow" style="font-size:1.2rem; color:var(--neon); font-weight:bold;"></div>
-            </div>
-        </div>
+  <input type="file" id="fileInput" style="display:none;" onchange="loadPhoto(event)">
+  <button class="key-btn action-btn" style="width:100%; margin-top:15px;" onclick="document.getElementById('fileInput').click()">UPLOAD SOURCE PHOTO</button>
+  
+  <div class="control-grid">
+    <button class="key-btn" onclick="rotate('up')">UP</button>
+    <button class="key-btn" onclick="triggerFlash()" style="background:#fff; color:#000;">FLASH 📸</button>
+    <button class="key-btn" onclick="rotate('down')">DOWN</button>
+    <button class="key-btn" onclick="rotate('left')">LEFT</button>
+    <button class="key-btn" onclick="triggerSmile()">SMILE 😊</button>
+    <button class="key-btn" onclick="rotate('right')">RIGHT</button>
+    <button class="key-btn" onclick="triggerBlink()" style="background:#39ff14; color:#000; grid-column: span 3; border:none;">PERFORM BLINK 😉</button>
+  </div>
+</div>
 
-        <div class="viewport" id="vPort">
-            <div class="face-oval"></div>
-            <img id="viewImage" src="" style="display:none;">
-        </div>
+<div id="chatToggle" onclick="toggleChat()">🤖</div>
+<div id="chatContainer">
+  <div class="chat-header"><span>ELISY TECH SUPPORT</span> <span onclick="toggleChat()" style="cursor:pointer;">×</span></div>
+  <div id="chatMessages"><div class="msg ai-msg">System Ready. I am your ELISY 254 Technical Assistant.</div></div>
+  <div class="chat-input-area">
+    <input type="text" id="userText" placeholder="Ask Gemini..." onkeypress="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()" style="background:#00E5FF; border:none; color:#000; padding:8px 12px; border-radius:8px; font-weight:bold;">SEND</button>
+  </div>
+</div>
 
-        <div style="margin-top:20px; width:100%; max-width:600px; display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-            <div style="background:var(--card); padding:15px; border-radius:10px; border:1px solid #30363d;">
-                <label style="font-size:0.7rem; color:gray;">IDENTITY SOURCE</label>
-                <input type="file" id="imageInput" style="font-size:0.7rem; margin-top:5px;">
-            </div>
-            <div style="background:var(--card); padding:15px; border-radius:10px; border:1px solid #30363d;">
-                <button onclick="doAction('blink')" style="background:#ff0055; color:white; border:none; padding:8px; width:100%; border-radius:4px; cursor:pointer;">BLINK [B]</button>
-                <button onclick="logout()" style="background:gray; color:white; border:none; padding:8px; width:100%; border-radius:4px; cursor:pointer; margin-top:5px;">LOGOUT</button>
-            </div>
-        </div>
-    </div>
+<div class="marquee"><div class="marquee-content">🇰🇪 KENYA | 🇺🇸 USA | 🇬🇧 UK | 🇦🇪 UAE | 🇳🇬 NIGERIA | 🇿🇦 SOUTH AFRICA</div></div>
 
-    <div class="flag-ticker">
-        <div class="ticker-content" id="ticker"></div>
-    </div>
+<script>
+  window.onload = () => setTimeout(() => document.getElementById('splashScreen').style.display='none', 2500);
 
-    <script>
-        let systemOTP = "";
-        let currentName = "";
+  let progress = 0;
+  function updateProgress(amount) {
+    if (progress >= 100) return;
+    progress += amount;
+    if (progress > 100) progress = 100;
+    document.getElementById('progressBar').style.width = progress + "%";
+    document.getElementById('verifyStatus').innerText = progress === 100 ? "● VERIFIED" : progress + "% ANALYZED";
+    if (progress === 100) document.getElementById('verifyStatus').style.color = "#39ff14";
+  }
 
-        // AUTHENTICATION
-        function generateCode() {
-            const name = document.getElementById('userName').value;
-            if (name && document.getElementById('userPhone').value) {
-                currentName = name;
-                systemOTP = Math.floor(10000 + Math.random() * 90000).toString();
-                document.getElementById('codeDisplay').innerText = systemOTP;
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('otpSection').style.display = 'block';
-            } else { alert("Please enter Name and Phone"); }
-        }
+  // --- GEMINI API ---
+  const API_KEY = "AIzaSyBvwS25nCgUoAi5S8WuTNA29JrTn9KBGR4"; 
+  async function sendMessage() {
+    const input = document.getElementById('userText');
+    const box = document.getElementById('chatMessages');
+    const userMsg = input.value.trim();
+    if (!userMsg) return;
+    box.innerHTML += `<div class="msg user-msg">${userMsg}</div>`;
+    input.value = "";
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: "You are ELISY 254 Tech Support. Answer concise: " + userMsg }] }] })
+      });
+      const data = await response.json();
+      box.innerHTML += `<div class="msg ai-msg">${data.candidates[0].content.parts[0].text}</div>`;
+    } catch (e) { box.innerHTML += `<div class="msg ai-msg">Error.</div>`; }
+    box.scrollTop = box.scrollHeight;
+  }
 
-        function verifyAccess() {
-            if (document.getElementById('otpInput').value === systemOTP) {
-                localStorage.setItem('elisy_auth', currentName);
-                loadDashboard(currentName);
-            } else { alert("Invalid Code"); }
-        }
+  function toggleChat() {
+    const chat = document.getElementById('chatContainer');
+    chat.style.display = (chat.style.display === 'flex') ? 'none' : 'flex';
+  }
 
-        function checkSession() {
-            const saved = localStorage.getItem('elisy_auth');
-            if (saved) loadDashboard(saved);
-            updateClock();
-        }
+  // --- IDENTITY CONTROLS ---
+  function loadPhoto(e) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = document.getElementById('targetPhoto');
+      img.src = reader.result; img.style.display = 'block';
+      document.getElementById('empty-msg').style.display = 'none';
+      updateProgress(10);
+    };
+    reader.readAsDataURL(e.target.files[0]);
+  }
 
-        function loadDashboard(name) {
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('mainDashboard').style.display = 'flex';
-            document.getElementById('sessionUser').innerText = ● USER: ${name.toUpperCase()};
-            setupTicker();
-        }
+  function triggerFlash() {
+    const flash = document.getElementById('flashLayer');
+    flash.style.opacity = '1';
+    setTimeout(() => { flash.style.opacity = '0'; }, 150);
+    updateProgress(10);
+  }
 
-        function logout() { localStorage.removeItem('elisy_auth'); location.reload(); }
+  function rotate(d) {
+    const c = document.getElementById('photoContainer');
+    let x=0, y=0;
+    if(d==='left') y=-35; else if(d==='right') y=35; else if(d==='up') x=22; else if(d==='down') x=-22;
+    c.style.transform = `rotateY(${y}deg) rotateX(${x}deg)`;
+    updateProgress(10);
+  }
 
-        // UI EXTRAS
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('timeNow').innerText = now.toLocaleTimeString();
-            document.getElementById('dateNow').innerText = now.toLocaleDateString();
-            setTimeout(updateClock, 1000);
-        }
+  function triggerBlink() {
+    const i = document.getElementById('targetPhoto');
+    i.style.transform = 'scaleY(0.01)';
+    setTimeout(() => i.style.transform = 'scaleY(1)', 130);
+    updateProgress(20);
+  }
 
-        function setupTicker() {
-            const list = [{n:"KENYA",f:"🇰🇪"},{n:"USA",f:"🇺🇸"},{n:"UK",f:"🇬🇧"},{n:"NIGERIA",f:"🇳🇬"},{n:"UAE",f:"🇦🇪"}];
-            const html = list.map(c => <span style="margin:0 30px; color:var(--neon)">${c.f} ${c.n}</span>).join('');
-            document.getElementById('ticker').innerHTML = html + html;
-        }
-
-        // LIVENESS ACTIONS
-        function doAction(type) {
-            const img = document.getElementById('viewImage');
-            if(type === 'blink') {
-                img.style.filter = 'brightness(0)';
-                setTimeout(() => img.style.filter = 'brightness(1)', 150);
-            }
-        }
-
-        document.getElementById('imageInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const img = document.getElementById('viewImage');
-                    img.src = ev.target.result; img.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        window.addEventListener('keydown', (e) => {
-            const img = document.getElementById('viewImage');
-            if (e.key.toLowerCase() === 'b') doAction('blink');
-            if (e.key === 'ArrowLeft') img.style.transform = 'rotateY(-20deg)';
-            if (e.key === 'ArrowRight') img.style.transform = 'rotateY(20deg)';
-            if (e.key === 'ArrowUp') img.style.transform = 'rotateX(-15deg)';
-            if (e.key === 'ArrowDown') img.style.transform = 'rotateX(15deg)';
-        });
-    </script>
+  function triggerSmile() {
+    const i = document.getElementById('targetPhoto');
+    i.style.transform = 'scaleX(1.08) scaleY(0.97)';
+    setTimeout(() => i.style.transform = 'scale(1)', 1200);
+    updateProgress(15);
+  }
+</script>
 </body>
 </html>
