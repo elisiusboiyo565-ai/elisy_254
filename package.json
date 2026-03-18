@@ -20,8 +20,8 @@
   },
   "homepage": "https://github.com/elisiusboiyo565-ai/elisy_254#readme",
   "dependencies": {
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "telegraf": "^4.16.3"
-  },
-  "devDependencies": {}
+  }
 }
