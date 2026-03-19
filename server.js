@@ -26,10 +26,10 @@ app.use((req, res, next) => {
 });
 
 // 3. Serve your static files
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname,'public')));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname,'public', 'index.html'));
 });
 
 // Health check for deployment monitoring
@@ -49,4 +49,4 @@ app.listen(PORT, () => {
     🌐 Monitoring Active: Yes
     ===========================================
     `);
-});
+});gg
